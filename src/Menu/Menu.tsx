@@ -6,6 +6,8 @@ import { EmailComposer } from "@ionic-native/email-composer";
 import { Printer } from "@ionic-native/printer";
 import { IonActionSheet, IonAlert } from "@ionic/react";
 import { saveOutline, save, mail, print } from "ionicons/icons";
+import DropboxTransferButton from "../services/DropboxTransferButton";
+import { DropboxService } from "../services/DropboxService";
 
 const Menu: React.FC<{
   showM: boolean;
@@ -150,6 +152,25 @@ const Menu: React.FC<{
       });
     }
   };
+  const handleTransferClick = async () => {
+    // Retrieve all saved files from Local storage
+    const localService = new Local();
+    const fileNames = await localService._getAllFiles();
+
+    // Initialize the Dropbox service
+    const dropboxService = new DropboxService();
+
+    // Loop through the file names and upload each file to Dropbox
+    for (const fileName of Object.keys(fileNames)) {
+      const file = await localService._getFile(fileName);
+      await dropboxService.uploadFile(file);
+      // Optionally, you can delete the file from Local storage after successful upload
+      await localService._deleteFile(fileName);
+    }
+
+    // Inform the user that the transfer is complete
+    console.log('All files transferred to Dropbox.');
+  };
 
   return (
     <React.Fragment>
@@ -189,6 +210,14 @@ const Menu: React.FC<{
             handler: () => {
               sendEmail();
               console.log("Email clicked");
+            },
+          },
+          {
+            text: "Add to Dropbox",
+            icon: mail, // Replace 'dropboxIcon' with the appropriate icon for Dropbox.
+            handler: () => {
+              handleTransferClick();
+              console.log("Add to Dropbox clicked");
             },
           },
         ]}
